@@ -1,0 +1,60 @@
+user root;
+worker_processes  1;
+error_log logs/error.log;
+#error_log stderr notice;
+#server_tokens off;
+
+daemon on;
+
+events {
+    worker_connections 160000;
+}
+http {
+	access_log off;
+	
+    lua_shared_dict has_result 50m;
+    lua_shared_dict dwz_cache 50m;
+    
+    lua_shared_dict mem_locks 10m;
+      
+	lua_shared_dict million_war_info 150m;
+	lua_shared_dict million_war_rank 20m;
+	
+	
+	lua_shared_dict happy_hundred_winner 20m;
+	
+	lua_shared_dict gold_battle_info 200m;
+	lua_shared_dict world_3v3_cache 50m;
+	lua_shared_dict world_boss_cache 10m;
+	lua_shared_dict zhuangbei_baoku_times_cashe 20m;
+    
+    lua_package_path "./conf/?.lua;/usr/local/lib/lua/?.lua;;";
+    lua_code_cache on;
+    
+    init_by_lua '
+        math.randomseed(os.time())
+        conf = {}
+        conf.db_string = "192.168.88.5;27017;"
+		conf.auth_sign = "c9cfac2dbbacf4f55f8411e463eecfba"
+		conf.db_name = "dtx_web"
+        handler_map = {}
+        require "init"
+		os.execute("mkdir -p data")
+        os.execute("chmod 777 data")
+		
+    ';
+
+    server {
+        listen 30081;
+
+        location /crossdomain.xml {
+            alias conf/util/crossdomain.xml;
+        }
+
+        location / {
+            default_type text/html;
+            content_by_lua_file "conf/util/app.lua";
+        }
+   }
+}
+
